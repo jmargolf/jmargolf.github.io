@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Growth Calculator | Tangent Financial</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:      #1a2535;
+    --slate:     #4a5568;
+    --muted:     #8a97a8;
+    --border:    #dde3ea;
+    --border-md: #c8d0d9;
+    --bg:        #ffffff;
+    --bg-off:    #f7f8fa;
+    --accent:    #2c5f8a;
+    --accent-lt: #e8f0f7;
+    --gold:      #a8834a;
+    --gold-mid:  #c9a96a;
+    --gold-lt:   #f5efe4;
+    --green:     #2d7a5f;
+    --coral:     #c0533a;
+    --font-serif:'Cormorant Garamond', Georgia, serif;
+    --font-sans: 'Jost', 'Helvetica Neue', sans-serif;
+    --r: 3px;
+    --transition: 0.25s ease;
+  }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--navy);
+    padding: 2.5rem 1.5rem 4rem;
+    line-height: 1.6;
+    font-weight: 300;
+  }
+  .wrap { max-width: 1020px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute; bottom: -1px; left: 50%;
+    transform: translateX(-50%);
+    width: 48px; height: 2px;
+    background: var(--gold-mid);
+  }
+  .eyebrow {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.9rem;
+  }
+  .header h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.8rem, 4vw, 2.75rem);
+    font-weight: 400; line-height: 1.15;
+    margin-bottom: 0.65rem;
+  }
+  .header h1 em { font-style: italic; color: var(--accent); }
+  .header p { font-size: 14px; color: var(--slate); max-width: 460px; margin: 0 auto; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .btn-group { display: flex; gap: 6px; }
+  .btn {
+    font-family: var(--font-sans); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    padding: 7px 14px; border-radius: var(--r);
+    border: 1px solid var(--border-md);
+    background: var(--bg); color: var(--slate);
+    cursor: pointer; transition: all var(--transition);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--navy); color: var(--navy); }
+  .btn.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .toggle-params {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--accent);
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 0; font-family: var(--font-sans);
+    transition: color var(--transition);
+  }
+  .toggle-params:hover { color: var(--navy); }
+  .toggle-params .arrow {
+    display: inline-block;
+    transition: transform var(--transition);
+    font-style: normal; font-size: 10px;
+  }
+  .toggle-params.collapsed .arrow { transform: rotate(-90deg); }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 295px 1fr;
+    gap: 1.5rem; align-items: start;
+    transition: grid-template-columns var(--transition);
+  }
+  .layout.panel-hidden {
+    grid-template-columns: 0px 1fr;
+  }
+  @media (max-width: 700px) {
+    .layout, .layout.panel-hidden { grid-template-columns: 1fr; }
+  }
+
+  /* ── Inputs Panel ── */
+  .inputs {
+    border: 1px solid var(--border); border-radius: var(--r);
+    overflow: hidden;
+    transition: opacity var(--transition), transform var(--transition);
+  }
+  .layout.panel-hidden .inputs {
+    opacity: 0; pointer-events: none;
+    transform: translateX(-8px);
+  }
+  .inputs-hd {
+    background: var(--navy); padding: 0.9rem 1.2rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .inputs-hd span {
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .inputs-bd { padding: 1.4rem 1.2rem; background: var(--bg); }
+
+  /* Comparison toggle inside panel */
+  .compare-toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 10px;
+    border: 1px solid var(--border); border-radius: var(--r);
+    margin-bottom: 1.2rem; cursor: pointer;
+    background: var(--bg-off);
+    transition: border-color var(--transition);
+  }
+  .compare-toggle:hover { border-color: var(--border-md); }
+  .compare-toggle.on { border-color: var(--accent); background: var(--accent-lt); }
+  .compare-toggle span {
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--slate);
+  }
+  .compare-toggle.on span { color: var(--accent); }
+  .switch {
+    width: 30px; height: 16px; border-radius: 8px;
+    background: var(--border-md); position: relative;
+    transition: background var(--transition); flex-shrink: 0;
+  }
+  .compare-toggle.on .switch { background: var(--accent); }
+  .switch::after {
+    content: ''; position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: white; transition: transform var(--transition);
+  }
+  .compare-toggle.on .switch::after { transform: translateX(14px); }
+
+  /* Comparison fields */
+  .compare-fields {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+  }
+  .compare-fields.open { max-height: 300px; opacity: 1; }
+  .compare-section {
+    border: 1px solid var(--border); border-radius: var(--r);
+    overflow: hidden; margin-bottom: 1.2rem;
+  }
+  .compare-section-hd {
+    padding: 7px 10px;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .compare-section-hd.inv { background: #e8f0f7; color: var(--accent); }
+  .compare-section-hd.cash { background: #fef6ec; color: var(--gold); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .compare-section-bd { padding: 0.9rem 0.9rem 0.2rem; }
+
+  .field { margin-bottom: 1.25rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 0.45rem;
+  }
+  .field-row span {
+    font-size: 11px; font-weight: 400;
+    letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted);
+  }
+  .field-row strong {
+    font-size: 13px; font-weight: 500; color: var(--navy);
+  }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 1px; background: var(--border-md);
+    outline: none; cursor: pointer; border-radius: 1px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--navy);
+    cursor: pointer; transition: border-color 0.15s, transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { border-color: var(--gold); transform: scale(1.2); }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--bg); border: 2px solid var(--navy);
+  }
+  .range-ends {
+    display: flex; justify-content: space-between;
+    margin-top: 4px; font-size: 10px; color: var(--muted);
+  }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+  /* ── Results ── */
+  .results { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .stat {
+    border: 1px solid var(--border); border-radius: var(--r);
+    padding: 1rem 1.1rem; background: var(--bg);
+  }
+  .stat.hero { border-top: 3px solid var(--navy); }
+  .stat-lbl { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .stat-val { font-family: var(--font-serif); font-size: 1.55rem; font-weight: 500; color: var(--navy); line-height: 1; }
+  .stat.hero .stat-val { color: var(--accent); }
+  .stat-note { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Comparison stats */
+  .compare-stats { display: none; }
+  .compare-stats.visible { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cstat {
+    border: 1px solid var(--border); border-radius: var(--r);
+    padding: 1rem 1.1rem;
+  }
+  .cstat.inv { border-top: 3px solid var(--accent); }
+  .cstat.cash { border-top: 3px solid var(--gold-mid); }
+  .cstat-lbl { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .cstat-name { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .cstat.inv .cstat-name { color: var(--accent); }
+  .cstat.cash .cstat-name { color: var(--gold); }
+  .cstat-val { font-family: var(--font-serif); font-size: 1.45rem; font-weight: 500; color: var(--navy); line-height: 1; }
+  .cstat-diff { font-size: 12px; margin-top: 5px; font-weight: 400; }
+  .cstat-diff.pos { color: var(--green); }
+  .cstat-diff.neg { color: var(--coral); }
+
+  /* Card */
+  .card { border: 1px solid var(--border); border-radius: var(--r); background: var(--bg); overflow: hidden; }
+  .card-hd {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.85rem 1.2rem; border-bottom: 1px solid var(--border);
+    background: var(--bg-off); flex-wrap: wrap; gap: 8px;
+  }
+  .card-title { font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--navy); }
+  .card-bd { padding: 1.2rem; }
+
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--slate); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .lswatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-wrap { position: relative; width: 100%; height: 240px; }
+
+  /* Milestones */
+  .ms-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+  @media (max-width: 500px) { .ms-grid { grid-template-columns: repeat(3,1fr); } }
+  .ms-tile {
+    text-align: center; padding: 0.85rem 0.4rem;
+    border: 1px solid var(--border); border-radius: var(--r);
+    transition: all 0.35s ease; background: var(--bg);
+  }
+  .ms-tile.lit { border-color: var(--gold-mid); background: var(--gold-lt); }
+  .ms-tile.dim { opacity: 0.28; }
+  .ms-mult { font-family: var(--font-serif); font-size: 1.2rem; font-weight: 500; color: var(--navy); line-height: 1; }
+  .ms-tile.lit .ms-mult { color: var(--gold); }
+  .ms-amt { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .ms-yr { font-size: 11px; color: var(--navy); margin-top: 4px; font-weight: 500; }
+
+  /* Table */
+  .table-scroll { max-height: 240px; overflow-y: auto; }
+  .table-scroll::-webkit-scrollbar { width: 3px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 2px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--muted); text-align: right; padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg-off);
+  }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid #f0f2f5; transition: background 0.1s; }
+  tbody tr:hover { background: var(--bg-off); }
+  tbody tr.ms-row { background: var(--gold-lt); }
+  td { font-size: 12.5px; padding: 0.5rem 1rem; text-align: right; color: var(--slate); font-weight: 300; }
+  td:first-child { text-align: left; color: var(--navy); font-weight: 400; }
+  td.up { color: var(--green); font-weight: 400; }
+  td.cash-col { color: var(--gold); font-weight: 300; }
+  td.diff-col { color: var(--accent); font-weight: 400; }
+  .ms-badge {
+    display: inline-block; font-size: 9px; font-weight: 500;
+    letter-spacing: 0.05em; padding: 1px 5px;
+    border: 1px solid var(--gold-mid); border-radius: 2px;
+    color: var(--gold); margin-left: 4px; vertical-align: middle;
+  }
+
+  .footnote {
+    text-align: center; font-size: 11px; color: var(--muted);
+    margin-top: 2.5rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border); line-height: 1.8;
+  }
+  .footnote a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="eyebrow">Tangent Financial</div>
+    <h1>The <em>power</em> of compounding</h1>
+    <p>Model how your investments could grow — and how they compare to keeping cash on the sidelines.</p>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="btn-group">
+      <button class="btn active" id="btn-bar" onclick="setChartType('bar')">
+        <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="5" width="3" height="7"/><rect x="5" y="2" width="3" height="10"/><rect x="9" y="7" width="3" height="5"/></svg>
+        Bar
+      </button>
+      <button class="btn" id="btn-line" onclick="setChartType('line')">
+        <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,10 4,5 7,7 10,2 12,4"/></svg>
+        Line
+      </button>
+    </div>
+    <button class="toggle-params" id="toggle-params" onclick="togglePanel()">
+      <span class="arrow">▾</span> <span id="toggle-label">Hide parameters</span>
+    </button>
+  </div>
+
+  <div class="layout" id="layout">
+    <!-- Inputs -->
+    <div class="inputs" id="inputs-panel">
+      <div class="inputs-hd"><span>Parameters</span></div>
+      <div class="inputs-bd">
+
+        <!-- Comparison toggle -->
+        <div class="compare-toggle" id="cmp-toggle" onclick="toggleCompare()">
+          <span>Compare vs. cash</span>
+          <div class="switch"></div>
+        </div>
+
+        <!-- Comparison fields -->
+        <div class="compare-fields" id="cmp-fields">
+          <div class="compare-section">
+            <div class="compare-section-hd inv">
+              <div class="dot" style="background:#2c5f8a"></div> Investment
+            </div>
+            <div class="compare-section-bd">
+              <div class="field">
+                <div class="field-row"><span>Annual return</span><strong id="lbl-r">7.0%</strong></div>
+                <input type="range" id="rng-r" min="1" max="20" step="0.5" value="7">
+                <div class="range-ends"><span>1%</span><span>20%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="compare-section">
+            <div class="compare-section-hd cash">
+              <div class="dot" style="background:#c9a96a"></div> Cash / savings
+            </div>
+            <div class="compare-section-bd">
+              <div class="field">
+                <div class="field-row"><span>Annual return</span><strong id="lbl-rc">2.0%</strong></div>
+                <input type="range" id="rng-rc" min="0" max="10" step="0.25" value="2">
+                <div class="range-ends"><span>0%</span><span>10%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Normal fields (rate shown when not comparing) -->
+        <div id="normal-rate" class="field">
+          <div class="field-row"><span>Annual return rate</span><strong id="lbl-r2">7.0%</strong></div>
+          <input type="range" id="rng-r2" min="1" max="20" step="0.5" value="7">
+          <div class="range-ends"><span>1%</span><span>20%</span></div>
+        </div>
+
+        <div class="field">
+          <div class="field-row"><span>Initial investment</span><strong id="lbl-p">$10,000</strong></div>
+          <input type="range" id="rng-p" min="1000" max="500000" step="1000" value="10000">
+          <div class="range-ends"><span>$1k</span><span>$500k</span></div>
+        </div>
+
+        <div class="field">
+          <div class="field-row"><span>Monthly contribution</span><strong id="lbl-m">$500</strong></div>
+          <input type="range" id="rng-m" min="0" max="5000" step="50" value="500">
+          <div class="range-ends"><span>$0</span><span>$5k/mo</span></div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="field">
+          <div class="field-row"><span>Time horizon</span><strong id="lbl-t">25 years</strong></div>
+          <input type="range" id="rng-t" min="1" max="50" step="1" value="25">
+          <div class="range-ends"><span>1 yr</span><span>50 yrs</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results">
+
+      <!-- Single-mode stats -->
+      <div class="stats" id="single-stats">
+        <div class="stat hero">
+          <div class="stat-lbl">Final balance</div>
+          <div class="stat-val" id="s-final"></div>
+          <div class="stat-note" id="s-mult"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Total contributed</div>
+          <div class="stat-val" id="s-contrib"></div>
+          <div class="stat-note" id="s-contrib-p"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-lbl">Interest earned</div>
+          <div class="stat-val" id="s-interest"></div>
+          <div class="stat-note" id="s-interest-p"></div>
+        </div>
+      </div>
+
+      <!-- Compare-mode stats -->
+      <div class="compare-stats" id="cmp-stats">
+        <div class="cstat inv">
+          <div class="cstat-name">Investment</div>
+          <div class="cstat-lbl">Final balance</div>
+          <div class="cstat-val" id="c-inv-final"></div>
+          <div class="cstat-diff pos" id="c-inv-diff"></div>
+        </div>
+        <div class="cstat cash">
+          <div class="cstat-name">Cash / savings</div>
+          <div class="cstat-lbl">Final balance</div>
+          <div class="cstat-val" id="c-cash-final"></div>
+          <div class="cstat-diff neg" id="c-cash-diff"></div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">Balance over time</div>
+          <div class="legend" id="chart-legend"></div>
+        </div>
+        <div class="card-bd">
+          <div class="chart-wrap"><canvas id="chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Milestones -->
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Growth milestones</div></div>
+        <div class="card-bd"><div class="ms-grid" id="milestones"></div></div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Year-by-year breakdown</div></div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr id="thead-row"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="footnote">
+    For illustrative purposes only. Returns are compounded monthly and do not account for taxes, fees, or inflation.<br>
+    Past performance does not guarantee future results. Consult a qualified financial advisor before making investment decisions.<br>
+    <a href="https://www.tangentfin.co" target="_blank">Tangent Financial</a> &nbsp;·&nbsp;
+    <a href="https://www.tangentfin.co/english-terms-conditions" target="_blank">Terms of Use</a> &nbsp;·&nbsp;
+    <a href="https://brokercheck.finra.org/" target="_blank">FINRA BrokerCheck</a>
+  </p>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const MULTIPLES = [2, 5, 10, 20, 50];
+  const $ = id => document.getElementById(id);
+
+  let chartType = 'bar';
+  let compareMode = false;
+  let panelOpen = true;
+  let chart;
+
+  const full    = n => '$' + Math.round(n).toLocaleString();
+  const compact = n => { n = Math.round(n); if (n>=1e6) return '$'+(n/1e6).toFixed(2)+'M'; if (n>=1e3) return '$'+(n/1000).toFixed(0)+'k'; return '$'+n; };
+
+  function grow(P, M, rate, T) {
+    const bals = [P], contribs = [P];
+    let bal = P, contrib = P;
+    for (let y = 1; y <= T; y++) {
+      for (let mo = 0; mo < 12; mo++) { bal = bal*(1+rate/12)+M; contrib += M; }
+      bals.push(Math.round(bal)); contribs.push(Math.round(contrib));
+    }
+    return { bals, contribs };
+  }
+
+  function run() {
+    const P  = +$('rng-p').value;
+    const M  = +$('rng-m').value;
+    const T  = +$('rng-t').value;
+    const r  = compareMode ? +$('rng-r').value/100  : +$('rng-r2').value/100;
+    const rc = compareMode ? +$('rng-rc').value/100 : 0;
+
+    const inv  = grow(P, M, r, T);
+    const cash = compareMode ? grow(P, M, rc, T) : null;
+
+    const final    = inv.bals[T];
+    const tc       = inv.contribs[T];
+    const ti       = final - tc;
+    const mult     = (final/P).toFixed(1);
+
+    // Single stats
+    $('s-final').textContent    = full(final);
+    $('s-mult').textContent     = mult + '× initial investment';
+    $('s-contrib').textContent  = full(tc);
+    $('s-contrib-p').textContent= Math.round(tc/final*100) + '% of final balance';
+    $('s-interest').textContent = full(ti);
+    $('s-interest-p').textContent= Math.round(ti/final*100) + '% of final balance';
+
+    // Compare stats
+    if (compareMode && cash) {
+      const cf = cash.bals[T];
+      const diff = final - cf;
+      $('c-inv-final').textContent  = full(final);
+      $('c-inv-diff').textContent   = '+' + full(diff) + ' more than cash';
+      $('c-cash-final').textContent = full(cf);
+      $('c-cash-diff').textContent  = full(diff) + ' less than investment';
+    }
+
+    // Milestones (investment only)
+    const msEl = $('milestones');
+    msEl.innerHTML = '';
+    MULTIPLES.forEach(m => {
+      const target = P * m;
+      let yr = null;
+      for (let i = 0; i <= T; i++) { if (inv.bals[i] >= target) { yr = i; break; } }
+      const div = document.createElement('div');
+      div.className = 'ms-tile ' + (yr !== null ? 'lit' : 'dim');
+      div.innerHTML = `<div class="ms-mult">${m}×</div><div class="ms-amt">${full(target)}</div><div class="ms-yr">${yr !== null ? 'Year '+yr : '> '+T+' yrs'}</div>`;
+      msEl.appendChild(div);
+    });
+
+    // Table headers
+    const theadRow = $('thead-row');
+    if (compareMode) {
+      theadRow.innerHTML = '<th>Year</th><th>Investment</th><th>Cash</th><th>Difference</th><th>Inv. gain (yr)</th>';
+    } else {
+      theadRow.innerHTML = '<th>Year</th><th>Balance</th><th>Total contributed</th><th>Interest earned</th><th>Annual gain</th>';
+    }
+
+    // Table body
+    const tbody = $('tbody');
+    tbody.innerHTML = '';
+    const msYrs = new Set();
+    MULTIPLES.forEach(m => { for (let i=0; i<=T; i++) { if (inv.bals[i]>=P*m) { msYrs.add(i); break; } } });
+
+    for (let y = 1; y <= T; y++) {
+      const b  = inv.bals[y];
+      const c  = inv.contribs[y];
+      const interest = b - c;
+      const gain = b - inv.bals[y-1];
+      const hitM = MULTIPLES.find(m => inv.bals[y]>=P*m && inv.bals[y-1]<P*m);
+      const tr = document.createElement('tr');
+      if (msYrs.has(y)) tr.className = 'ms-row';
+
+      if (compareMode && cash) {
+        const cb  = cash.bals[y];
+        const diff = b - cb;
+        tr.innerHTML = `
+          <td>Year ${y}${hitM ? '<span class="ms-badge">'+hitM+'×</span>' : ''}</td>
+          <td class="up">${full(b)}</td>
+          <td class="cash-col">${full(cb)}</td>
+          <td class="diff-col">+${full(diff)}</td>
+          <td class="up">+${full(gain)}</td>`;
+      } else {
+        tr.innerHTML = `
+          <td>Year ${y}${hitM ? '<span class="ms-badge">'+hitM+'×</span>' : ''}</td>
+          <td>${full(b)}</td>
+          <td>${full(c)}</td>
+          <td class="up">+${full(interest)}</td>
+          <td class="up">+${full(gain)}</td>`;
+      }
+      tbody.appendChild(tr);
+    }
+
+    // Chart data
+    const skip = T > 30 ? 5 : T > 15 ? 2 : 1;
+    const idxs = [];
+    for (let i = 0; i <= T; i++) { if (i%skip===0 || i===T) idxs.push(i); }
+    const labels = idxs.map(i => i===0 ? 'Now' : 'Yr '+i);
+
+    let datasets, legendHTML;
+
+    if (compareMode && cash) {
+      if (chartType === 'bar') {
+        datasets = [
+          { label: 'Investment', data: idxs.map(i => inv.bals[i]), backgroundColor: '#2c5f8a', borderWidth: 0, borderRadius: 1 },
+          { label: 'Cash', data: idxs.map(i => cash.bals[i]), backgroundColor: '#c9a96a', borderWidth: 0, borderRadius: 1 }
+        ];
+      } else {
+        datasets = [
+          { label: 'Investment', data: idxs.map(i => inv.bals[i]), borderColor: '#2c5f8a', backgroundColor: 'rgba(44,95,138,0.06)', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 },
+          { label: 'Cash', data: idxs.map(i => cash.bals[i]), borderColor: '#c9a96a', backgroundColor: 'rgba(201,169,106,0.06)', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2, borderDash: [5,4] }
+        ];
+      }
+      legendHTML = `
+        <div class="legend-item"><div class="lswatch" style="background:#2c5f8a"></div>Investment</div>
+        <div class="legend-item"><div class="lswatch" style="background:#c9a96a"></div>Cash / savings</div>`;
+    } else {
+      if (chartType === 'bar') {
+        datasets = [
+          { label: 'Interest growth', data: idxs.map(i => inv.bals[i]-inv.contribs[i]), backgroundColor: '#2c5f8a', stack: 'a', borderWidth: 0 },
+          { label: 'Contributions',   data: idxs.map(i => inv.contribs[i]), backgroundColor: '#a8c9e0', stack: 'a', borderWidth: 0 }
+        ];
+        legendHTML = `
+          <div class="legend-item"><div class="lswatch" style="background:#2c5f8a"></div>Interest growth</div>
+          <div class="legend-item"><div class="lswatch" style="background:#a8c9e0"></div>Contributions</div>`;
+      } else {
+        datasets = [
+          { label: 'Total balance',  data: idxs.map(i => inv.bals[i]),    borderColor: '#2c5f8a', backgroundColor: 'rgba(44,95,138,0.07)', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 },
+          { label: 'Contributions',  data: idxs.map(i => inv.contribs[i]), borderColor: '#a8c9e0', backgroundColor: 'transparent', fill: false, tension: 0, pointRadius: 0, borderWidth: 1.5, borderDash: [4,4] }
+        ];
+        legendHTML = `
+          <div class="legend-item"><div class="lswatch" style="background:#2c5f8a"></div>Total balance</div>
+          <div class="legend-item"><div class="lswatch" style="background:#a8c9e0"></div>Contributions</div>`;
+      }
+    }
+
+    $('chart-legend').innerHTML = legendHTML;
+
+    const isStacked = chartType === 'bar' && !compareMode;
+    const tooltipCb = {
+      label: ctx => {
+        if (compareMode) return ' ' + ctx.dataset.label + ': ' + full(ctx.parsed.y);
+        if (chartType === 'bar') return (ctx.datasetIndex === 0 ? ' Interest: ' : ' Contributed: ') + full(ctx.parsed.y);
+        return (ctx.datasetIndex === 0 ? ' Balance: ' : ' Contributed: ') + full(ctx.parsed.y);
+      },
+      afterBody: items => {
+        if (compareMode) {
+          const i = items[0].dataIndex;
+          return [' Difference: +' + full(inv.bals[idxs[i]] - (cash ? cash.bals[idxs[i]] : 0))];
+        }
+        if (chartType === 'bar') return [' Total: ' + full(inv.bals[idxs[items[0].dataIndex]])];
+        return [];
+      }
+    };
+
+    if (!chart) {
+      chart = new Chart($('chart'), {
+        type: chartType === 'bar' ? 'bar' : 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1a2535', borderColor: 'rgba(201,169,106,0.3)', borderWidth: 1,
+              titleColor: '#c9a96a', bodyColor: '#f7f8fa', padding: 10,
+              mode: 'index', intersect: false,
+              callbacks: tooltipCb
+            }
+          },
+          scales: {
+            x: {
+              stacked: isStacked,
+              ticks: { color: '#8a97a8', font: { size: 10, family: "'Jost'" }, autoSkip: false, maxRotation: 0 },
+              grid: { display: false }, border: { color: '#dde3ea' }
+            },
+            y: {
+              stacked: isStacked,
+              ticks: { color: '#8a97a8', font: { size: 10, family: "'Jost'" }, callback: v => compact(v) },
+              grid: { color: '#f0f2f5' }, border: { display: false }
+            }
+          }
+        }
+      });
+    } else {
+      chart.config.type = chartType === 'bar' ? 'bar' : 'line';
+      chart.data.labels = labels;
+      chart.data.datasets = datasets;
+      chart.options.plugins.tooltip.callbacks = tooltipCb;
+      chart.options.scales.x.stacked = isStacked;
+      chart.options.scales.y.stacked = isStacked;
+      chart.update();
+    }
+  }
+
+  function setChartType(type) {
+    chartType = type;
+    $('btn-bar').classList.toggle('active', type === 'bar');
+    $('btn-line').classList.toggle('active', type === 'line');
+    run();
+  }
+
+  function togglePanel() {
+    panelOpen = !panelOpen;
+    const layout = $('layout');
+    const btn    = $('toggle-params');
+    const label  = $('toggle-label');
+    layout.classList.toggle('panel-hidden', !panelOpen);
+    btn.classList.toggle('collapsed', !panelOpen);
+    label.textContent = panelOpen ? 'Hide parameters' : 'Show parameters';
+    if (chart) setTimeout(() => chart.resize(), 300);
+  }
+
+  function toggleCompare() {
+    compareMode = !compareMode;
+    const toggle = $('cmp-toggle');
+    const fields = $('cmp-fields');
+    const normalRate = $('normal-rate');
+    const singleStats = $('single-stats');
+    const cmpStats = $('cmp-stats');
+
+    toggle.classList.toggle('on', compareMode);
+    fields.classList.toggle('open', compareMode);
+    normalRate.style.display = compareMode ? 'none' : '';
+    singleStats.style.display = compareMode ? 'none' : '';
+    cmpStats.classList.toggle('visible', compareMode);
+    run();
+  }
+
+  // Slider wiring
+  $('rng-p').addEventListener('input', function() { $('lbl-p').textContent = '$'+Math.round(+this.value).toLocaleString(); run(); });
+  $('rng-m').addEventListener('input', function() { $('lbl-m').textContent = '$'+(+this.value).toLocaleString(); run(); });
+  $('rng-t').addEventListener('input', function() { $('lbl-t').textContent = this.value+' year'+(this.value==1?'':'s'); run(); });
+  $('rng-r').addEventListener('input',  function() { $('lbl-r').textContent  = (+this.value).toFixed(1)+'%'; run(); });
+  $('rng-r2').addEventListener('input', function() { $('lbl-r2').textContent = (+this.value).toFixed(1)+'%'; run(); });
+  $('rng-rc').addEventListener('input', function() { $('lbl-rc').textContent = (+this.value).toFixed(2)+'%'; run(); });
+
+  run();
+</script>
+</body>
+</html>
